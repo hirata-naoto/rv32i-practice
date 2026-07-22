@@ -61,6 +61,7 @@ module rv32i_core #(
     logic [31:0] alu_result_d;
     logic [31:0] mem_addr_d;
     logic [31:0] branch_target_d;
+    logic [31:0] jalr_target_raw_d;
     logic [31:0] load_data_d;
     logic [31:0] store_wdata_d;
     logic [3:0]  store_wstrb_d;
@@ -68,6 +69,8 @@ module rv32i_core #(
     logic        exec_illegal_d;
     logic        mem_illegal_d;
     logic        branch_misaligned_d;
+    logic        dmem_access_active_d;
+    logic        dmem_store_active_d;
 
     function automatic logic [31:0] make_byte_word(
         input logic [7:0] data_byte,
@@ -119,6 +122,7 @@ module rv32i_core #(
         alu_result_d        = 32'h0000_0000;
         mem_addr_d          = 32'h0000_0000;
         branch_target_d     = 32'h0000_0000;
+        jalr_target_raw_d   = 32'h0000_0000;
         load_data_d         = 32'h0000_0000;
         store_wdata_d       = 32'h0000_0000;
         store_wstrb_d       = 4'b0000;
@@ -145,8 +149,9 @@ module rv32i_core #(
                 if (funct3_d != 3'b000) begin
                     exec_illegal_d = 1'b1;
                 end else begin
-                    branch_target_d     = (rs1_val_d + imm_i_d) & 32'hffff_fffe;
-                    branch_misaligned_d = |branch_target_d[1:0];
+                    jalr_target_raw_d   = rs1_val_d + imm_i_d;
+                    branch_target_d     = jalr_target_raw_d & 32'hffff_fffe;
+                    branch_misaligned_d = jalr_target_raw_d[1];
                 end
             end
 
@@ -356,11 +361,13 @@ module rv32i_core #(
     end
 
     always @* begin
+        dmem_access_active_d = (state_q == STATE_MEMORY) && ((opcode_d == OPCODE_LOAD) || (opcode_d == OPCODE_STORE));
+        dmem_store_active_d  = (state_q == STATE_MEMORY) && (opcode_d == OPCODE_STORE);
         imem_addr  = pc_q;
-        dmem_valid = (state_q == STATE_MEMORY) && ((opcode_d == OPCODE_LOAD) || (opcode_d == OPCODE_STORE));
+        dmem_valid = dmem_access_active_d;
         dmem_addr  = mem_addr_d;
-        dmem_wdata = ((state_q == STATE_MEMORY) && (opcode_d == OPCODE_STORE)) ? store_wdata_d : 32'h0000_0000;
-        dmem_wstrb = ((state_q == STATE_MEMORY) && (opcode_d == OPCODE_STORE)) ? store_wstrb_d : 4'b0000;
+        dmem_wdata = dmem_store_active_d ? store_wdata_d : 32'h0000_0000;
+        dmem_wstrb = dmem_store_active_d ? store_wstrb_d : 4'b0000;
         trap       = (state_q == STATE_TRAP);
     end
 
