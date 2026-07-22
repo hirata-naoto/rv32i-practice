@@ -464,7 +464,7 @@ module rv32i_core #(
                 end
 
                 STATE_WRITEBACK: begin
-                    if (wb_we_q && (wb_rd_q != 5'd0)) begin
+                    if (wb_we_q) begin
                         regs_q[wb_rd_q] <= wb_data_q;
                     end
                     pc_q    <= next_pc_q;
