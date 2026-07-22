@@ -1,5 +1,5 @@
 // RV32I プロセッサコア
-// RISC-V 基本整数命令セット（32ビット）を実装した5ステージパイプラインレス（多サイクル）コアです。
+// RISC-V 基本整数命令セット（32ビット）を実装した多サイクルコアです。
 // フェッチ・デコード・実行・メモリ・ライトバックの各ステートを順に遷移します。
 module rv32i_core #(
     parameter logic [31:0] RESET_PC = 32'h0000_0000  // リセット時のプログラムカウンタ初期値
@@ -222,7 +222,7 @@ module rv32i_core #(
                             default: load_data_d = 32'h0000_0000;
                         endcase
                     end
-                    3'b001: begin  // LH: ハーフワードロード（符号拡張）、1バイトアライン違反はtrap
+                    3'b001: begin  // LH: ハーフワードロード（符号拡張）、2バイトアライン必須
                         if (mem_addr_d[0]) begin
                             mem_illegal_d = 1'b1;
                         end else if (mem_addr_d[1]) begin
@@ -247,7 +247,7 @@ module rv32i_core #(
                             default: load_data_d = 32'h0000_0000;
                         endcase
                     end
-                    3'b101: begin  // LHU: ハーフワードロード（ゼロ拡張）、1バイトアライン違反はtrap
+                    3'b101: begin  // LHU: ハーフワードロード（ゼロ拡張）、2バイトアライン必須
                         if (mem_addr_d[0]) begin
                             mem_illegal_d = 1'b1;
                         end else if (mem_addr_d[1]) begin
