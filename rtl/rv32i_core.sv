@@ -71,35 +71,32 @@ module rv32i_core #(
     logic        branch_misaligned_d;
     logic        dmem_access_active_d;
     logic        dmem_store_active_d;
+    integer      i;
 
     function automatic logic [31:0] make_byte_word(
         input logic [7:0] data_byte,
         input logic [1:0] byte_offset
     );
         logic [31:0] tmp;
-        begin
-            tmp = 32'h0000_0000;
-            case (byte_offset)
-                2'd0: tmp[7:0]   = data_byte;
-                2'd1: tmp[15:8]  = data_byte;
-                2'd2: tmp[23:16] = data_byte;
-                2'd3: tmp[31:24] = data_byte;
-                default: tmp = 32'h0000_0000;
-            endcase
-            make_byte_word = tmp;
-        end
+        tmp = 32'h0000_0000;
+        case (byte_offset)
+            2'd0: tmp[7:0]   = data_byte;
+            2'd1: tmp[15:8]  = data_byte;
+            2'd2: tmp[23:16] = data_byte;
+            2'd3: tmp[31:24] = data_byte;
+            default: tmp = 32'h0000_0000;
+        endcase
+        make_byte_word = tmp;
     endfunction
 
     function automatic logic [31:0] make_half_word(
         input logic [15:0] data_half,
         input logic        upper_half
     );
-        begin
-            if (upper_half) begin
-                make_half_word = {data_half, 16'h0000};
-            end else begin
-                make_half_word = {16'h0000, data_half};
-            end
+        if (upper_half) begin
+            make_half_word = {data_half, 16'h0000};
+        end else begin
+            make_half_word = {16'h0000, data_half};
         end
     endfunction
 
@@ -372,8 +369,6 @@ module rv32i_core #(
     end
 
     always_ff @(posedge clk or negedge rst_n) begin
-        integer i;
-
         if (!rst_n) begin
             state_q   <= STATE_FETCH;
             pc_q      <= RESET_PC;
