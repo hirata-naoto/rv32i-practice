@@ -103,7 +103,7 @@ module rv32i_core #(
         end
     endfunction
 
-    always @* begin
+    always_comb begin
         opcode_d   = instr_q[6:0];
         funct3_d   = instr_q[14:12];
         funct7_d   = instr_q[31:25];
@@ -360,7 +360,7 @@ module rv32i_core #(
         endcase
     end
 
-    always @* begin
+    always_comb begin
         dmem_access_active_d = (state_q == STATE_MEMORY) && ((opcode_d == OPCODE_LOAD) || (opcode_d == OPCODE_STORE));
         dmem_store_active_d  = (state_q == STATE_MEMORY) && (opcode_d == OPCODE_STORE);
         imem_addr  = pc_q;
