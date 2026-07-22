@@ -369,12 +369,12 @@ module rv32i_core #(
         dmem_access_active_d = (state_q == STATE_MEMORY) &&
                                ((opcode_d == OPCODE_LOAD) || (opcode_d == OPCODE_STORE)) &&
                                !mem_illegal_d;
-        dmem_store_active_d  = dmem_access_active_d && (opcode_d == OPCODE_STORE);
+        dmem_store_active_d  = (state_q == STATE_MEMORY) && (opcode_d == OPCODE_STORE);
         imem_addr  = pc_q;
         dmem_valid = dmem_access_active_d;
         dmem_addr  = mem_addr_d;
-        dmem_wdata = dmem_store_active_d ? store_wdata_d : 32'h0000_0000;
-        dmem_wstrb = dmem_store_active_d ? store_wstrb_d : 4'b0000;
+        dmem_wdata = (dmem_store_active_d && !mem_illegal_d) ? store_wdata_d : 32'h0000_0000;
+        dmem_wstrb = (dmem_store_active_d && !mem_illegal_d) ? store_wstrb_d : 4'b0000;
         trap       = (state_q == STATE_TRAP);
     end
 
