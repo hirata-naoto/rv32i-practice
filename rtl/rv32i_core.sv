@@ -61,7 +61,8 @@ module rv32i_core #(
     logic [31:0] alu_result_d;
     logic [31:0] mem_addr_d;
     logic [31:0] branch_target_d;
-    logic [31:0] jalr_target_raw_d;
+    logic [31:0] jalr_target_sum_d;
+    logic [31:0] jalr_target_aligned_d;
     logic [31:0] load_data_d;
     logic [31:0] store_wdata_d;
     logic [3:0]  store_wstrb_d;
@@ -71,7 +72,7 @@ module rv32i_core #(
     logic        branch_misaligned_d;
     logic        dmem_access_active_d;
     logic        dmem_store_active_d;
-    integer      i;
+    integer      reg_idx;
 
     function automatic logic [31:0] make_byte_word(
         input logic [7:0] data_byte,
@@ -119,7 +120,8 @@ module rv32i_core #(
         alu_result_d        = 32'h0000_0000;
         mem_addr_d          = 32'h0000_0000;
         branch_target_d     = 32'h0000_0000;
-        jalr_target_raw_d   = 32'h0000_0000;
+        jalr_target_sum_d   = 32'h0000_0000;
+        jalr_target_aligned_d = 32'h0000_0000;
         load_data_d         = 32'h0000_0000;
         store_wdata_d       = 32'h0000_0000;
         store_wstrb_d       = 4'b0000;
@@ -146,9 +148,10 @@ module rv32i_core #(
                 if (funct3_d != 3'b000) begin
                     exec_illegal_d = 1'b1;
                 end else begin
-                    jalr_target_raw_d   = rs1_val_d + imm_i_d;
-                    branch_target_d     = jalr_target_raw_d & 32'hffff_fffe;
-                    branch_misaligned_d = jalr_target_raw_d[1];
+                    jalr_target_sum_d     = rs1_val_d + imm_i_d;
+                    jalr_target_aligned_d = jalr_target_sum_d & 32'hffff_fffe;
+                    branch_target_d       = jalr_target_aligned_d;
+                    branch_misaligned_d   = |jalr_target_aligned_d[1:0];
                 end
             end
 
@@ -378,8 +381,8 @@ module rv32i_core #(
             wb_rd_q   <= 5'd0;
             wb_we_q   <= 1'b0;
 
-            for (i = 0; i < 32; i = i + 1) begin
-                regs_q[i] <= 32'h0000_0000;
+            for (reg_idx = 0; reg_idx < 32; reg_idx = reg_idx + 1) begin
+                regs_q[reg_idx] <= 32'h0000_0000;
             end
         end else begin
             case (state_q)
