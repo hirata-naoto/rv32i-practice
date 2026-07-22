@@ -366,8 +366,10 @@ module rv32i_core #(
     end
 
     always_comb begin
-        dmem_access_active_d = (state_q == STATE_MEMORY) && ((opcode_d == OPCODE_LOAD) || (opcode_d == OPCODE_STORE));
-        dmem_store_active_d  = (state_q == STATE_MEMORY) && (opcode_d == OPCODE_STORE);
+        dmem_access_active_d = (state_q == STATE_MEMORY) &&
+                               ((opcode_d == OPCODE_LOAD) || (opcode_d == OPCODE_STORE)) &&
+                               !mem_illegal_d;
+        dmem_store_active_d  = dmem_access_active_d && (opcode_d == OPCODE_STORE);
         imem_addr  = pc_q;
         dmem_valid = dmem_access_active_d;
         dmem_addr  = mem_addr_d;
@@ -438,7 +440,11 @@ module rv32i_core #(
 
                             OPCODE_LOAD,
                             OPCODE_STORE: begin
-                                state_q <= STATE_MEMORY;
+                                if (mem_illegal_d) begin
+                                    state_q <= STATE_TRAP;
+                                end else begin
+                                    state_q <= STATE_MEMORY;
+                                end
                             end
 
                             OPCODE_FENCE: begin
