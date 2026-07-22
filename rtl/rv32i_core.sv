@@ -24,6 +24,7 @@ module rv32i_core #(
     localparam logic [6:0] OPCODE_OP     = 7'b0110011;
     localparam logic [6:0] OPCODE_FENCE  = 7'b0001111;
     localparam logic [6:0] OPCODE_SYSTEM = 7'b1110011;
+    localparam logic [31:0] RESET_INSTR_NOP = 32'h0000_0013;
 
     typedef enum logic [2:0] {
         STATE_FETCH,
@@ -345,7 +346,11 @@ module rv32i_core #(
             end
 
             OPCODE_FENCE: begin
-                if (funct3_d != 3'b000 && funct3_d != 3'b001) begin
+                if (funct3_d == 3'b000) begin
+                    exec_illegal_d = 1'b0;
+                end else if (funct3_d == 3'b001) begin
+                    exec_illegal_d = (instr_q[31:20] != 12'h000) || (rs1_idx_d != 5'd0) || (rd_idx_d != 5'd0);
+                end else begin
                     exec_illegal_d = 1'b1;
                 end
             end
@@ -375,7 +380,7 @@ module rv32i_core #(
         if (!rst_n) begin
             state_q   <= STATE_FETCH;
             pc_q      <= RESET_PC;
-            instr_q   <= 32'h0000_0013;
+            instr_q   <= RESET_INSTR_NOP;
             next_pc_q <= RESET_PC;
             wb_data_q <= 32'h0000_0000;
             wb_rd_q   <= 5'd0;
